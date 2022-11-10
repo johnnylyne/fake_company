@@ -1,3 +1,11 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
+
 type Bird struct {
 	Species     string `json:"species"`
 	Description string `json:"description"`
