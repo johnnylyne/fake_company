@@ -1,4 +1,4 @@
-module go_web_app
+module github.com/johnnylyne/fake_company
 
 go 1.19
 
