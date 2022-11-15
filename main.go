@@ -38,11 +38,11 @@ func newRouter() *mux.Router {
 	// with "/assets/", instead of the absolute route itself
 	r.PathPrefix("/assets").Handler(staticFileHandler).Methods("GET")
 
-	r.HandleFunc("/dummy", dummyHandler).Methods("POST")
-	r.HandleFunc("/counter", returnCounterHandler).Methods("GET")
 	r.HandleFunc("/branches", retrieveBranchesHandler).Methods("GET")
+	r.HandleFunc("/departments", retrieveDepartmentsHandler).Methods("GET")
+	r.HandleFunc("/employees", retrieveEmployeesHandler).Methods("GET")
+	r.HandleFunc("/branch", createBranchHandler).Methods("POST")
 	
-
 	return r
 }
 

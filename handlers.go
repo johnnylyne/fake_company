@@ -9,47 +9,27 @@ import (
 	"log"
 )
 
-type Response struct {
-	Counter string `json:"counter"`
-}
-
-var counter int
-
-func dummyHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Hit dummy handler")
-	counter++
-	fmt.Println(strconv.Itoa(counter))
-
-	http.Redirect(w, r, "/assets/", http.StatusFound)
-}
-
-func returnCounterHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Returning counter")
-	responseObj := Response{Counter: strconv.Itoa(counter)}
-	json.NewEncoder(w).Encode(responseObj)
-}
-
 type Branch struct {
-	ID     int `json:"id"`
+	Name string `json:"name"`
 	Address string `json:"address"`
 }
 
 type Department struct {
 	Name     string `json:"name"`
-	Branch string `json:"branch"`
+	BranchName string `json:"branch"`
 }
 
 type Employee struct {
 	Forename     string `json:"forename"`
 	Surname     string `json:"surname"`
-	Department string `json:"address"`
+	Department string `json:"department"`
 }
 
 func retrieveBranchesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println(database.DB)
+	fmt.Println("Retrieving branches")
 	var branches []Branch
 
-	rows, rowErr := database.DB.Query("SELECT * FROM main.branch")
+	rows, rowErr := database.DB.Query("SELECT br.name, br.address FROM main.branch br")
 	if rowErr != nil {
 		log.Fatalf("could not query data: %v", rowErr)
 	}
@@ -57,12 +37,132 @@ func retrieveBranchesHandler(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		branch := Branch{}
 		
-		if err := rows.Scan(&branch.ID, &branch.Address); err != nil {
+		if err := rows.Scan(&branch.Name, &branch.Address); err != nil {
 			log.Fatalf("could not scan row: %v", err)
 		}
-		fmt.Printf("branch: %v", branch)
-		// append the current instance to the slice of birds
 		branches = append(branches, branch)
 	}
 	json.NewEncoder(w).Encode(branches)
+}
+
+func retrieveDepartmentsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Retrieving departments")
+	var departments []Department
+
+	parameters, success := r.URL.Query()["branch_id"]
+	var branchId int
+
+	if success && len(parameters) > 0 {
+		branchParameter := parameters[0]
+		var err error
+		branchId, err = strconv.Atoi(branchParameter)
+		if err != nil {
+			log.Fatalf("Error parsing provided branchId")
+		}
+		rows, rowErr := database.DB.Query("SELECT dep.name, br.name FROM main.branch br JOIN main.department dep ON br.id = dep.branch_id WHERE br.id = $1", branchId)
+		if rowErr != nil {
+			log.Fatalf("could not query data: %v", rowErr)
+		}
+
+		defer rows.Close()
+	
+		for rows.Next() {
+			department := Department{}
+			
+			if err := rows.Scan(&department.Name, &department.BranchName); err != nil {
+				log.Fatalf("could not scan row: %v", err)
+			}
+			departments = append(departments, department)
+		}
+	} else {
+		rows, rowErr := database.DB.Query("SELECT dep.name, br.address FROM main.branch br JOIN main.department dep ON br.id = dep.branch_id")
+		if rowErr != nil {
+			log.Fatalf("could not query data: %v", rowErr)
+		}
+
+		for rows.Next() {
+			department := Department{}
+		
+			if err := rows.Scan(&department.Name, &department.BranchName); err != nil {
+				log.Fatalf("could not scan row: %v", err)
+			}
+			departments = append(departments, department)
+		}
+	}
+	json.NewEncoder(w).Encode(departments)
+}
+
+func retrieveEmployeesHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Retrieving employees")
+	var employees []Employee
+
+	rows, rowErr := database.DB.Query("SELECT emp.forename, emp.surname, dep.name FROM main.department dep JOIN main.employee emp ON dep.id = emp.department_id")
+	if rowErr != nil {
+		log.Fatalf("could not query data: %v", rowErr)
+	}
+
+	for rows.Next() {
+		employee := Employee{}
+		
+		if err := rows.Scan(&employee.Forename, &employee.Surname, &employee.Department); err != nil {
+			log.Fatalf("could not scan row: %v", err)
+		}
+		employees = append(employees, employee)
+	}
+	json.NewEncoder(w).Encode(employees)
+}
+
+
+func createBranchHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Creating branch")
+	type Response struct {
+		Id int `json:"id"`
+	}
+
+	response := Response{}
+
+	err := r.ParseForm()
+
+	// In case of any error, we respond with an error to the user
+	if err != nil {
+		fmt.Println(fmt.Errorf("Error: %v", err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	branch := Branch{}
+
+	branch.Name = r.Form.Get("name")
+	branch.Address = r.Form.Get("address")
+	fmt.Printf("name: ", branch.Name)
+	fmt.Printf("address: ", branch.Address)
+	
+	tx, transactionErr := database.DB.Begin()
+	if transactionErr != nil {
+		log.Fatalf("Error starting database transaction")
+	}
+
+
+	query := "INSERT INTO main.branch(name, address) VALUES ($1, $2) RETURNING ID"
+	stmt, statementErr := tx.Prepare(query)
+	if statementErr != nil {
+		log.Fatalf("could not formulate statement: %v", query)
+	}
+
+	insertErr := stmt.QueryRow(
+		&branch.Name,
+		&branch.Address,
+	).Scan(&response.Id)
+	
+	if insertErr != nil {
+		log.Fatalf("could not insert data: %v", branch)
+	}
+
+	commitErr := tx.Commit()
+
+	if commitErr != nil {
+		log.Fatalf("Error commiting transaction")
+	}
+	log.Printf("Successfully committed %v", branch)
+
+	json.NewEncoder(w).Encode(response)
 }

@@ -19,9 +19,7 @@ const (
 func init() {
 	var psqlconn string = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 
-	fmt.Println("Connection: " + psqlconn)
 	db, err := sql.Open("postgres", psqlconn)
-	fmt.Printf("db: %v", db)
 	if err != nil {
 		panic(err.Error())
 	}
