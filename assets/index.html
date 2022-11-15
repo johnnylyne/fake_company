@@ -2,24 +2,52 @@
 <html lang="en">
 
 <head>
-  <!-- <script type="text/javascript">
-    const getCounter = async () => {
-      const responseJson = await fetch("/counter")
-      return responseJson.json().counter
-    }
-    const addCounterValueToPage = async () => {
-      const counterValue = await getCounter()
-      document.getElementById("CounterValue").innerHTML = counterValue
-    }
-  </script> -->
+  <script type="text/javascript">
+    fetch("/counter")
+    .then(response => response.json())
+    .then(data => document.getElementById("CounterValue").innerHTML = data.counter)
+  </script>
   <title>Fake Company</title>
 </head>
 
 <body>
   <h1>Fake Company</h1>
 
+  <h2>Branches</h2>
+
+  <table id="branchesTable">
+    <tr>
+    <th>Name</th>
+    <th>Address</th>
+  </tr>
+  </table>
+
+  <form action="/branch" method="put">
+    <input type="text" name="Branch name">
+    <input type="text" name="Branch address">
+    <input type="submit" value="Add branch">
+  </form>
+
+  <h2>Departments</h2>
+
+  <table id="departmentsTable">
+    <tr>
+    <th>Name</th>
+    <th>Branch</th>
+  </tr>
+  </table>
+
+  <h2>Employees</h2>
+
+  <table id="employeesTable">
+    <tr>
+    <th>Forename</th>
+    <th>Surname</th>
+    <th>Department</th>
+  </tr>
+  </table>
+
   <p id="CounterText">Counter: <span id="CounterValue"></span></p>
-  <button>Get Counter</button>
   <!-- 
     This section contains the form, that will be used to hit the 
     `POST /bird` API that we will build in the next section
