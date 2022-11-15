@@ -15,6 +15,8 @@ import (
 )
 
 
+
+
 // The new router function creates the router and
 // returns it to us. We can now use this function
 // to instantiate and test the router outside of the main function
@@ -38,6 +40,8 @@ func newRouter() *mux.Router {
 
 	r.HandleFunc("/dummy", dummyHandler).Methods("POST")
 	r.HandleFunc("/counter", returnCounterHandler).Methods("GET")
+	r.HandleFunc("/branches", retrieveBranchesHandler).Methods("GET")
+	
 
 	return r
 }
