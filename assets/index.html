@@ -2,11 +2,6 @@
 <html lang="en">
 
 <head>
-  <script type="text/javascript">
-    fetch("/counter")
-    .then(response => response.json())
-    .then(data => document.getElementById("CounterValue").innerHTML = data.counter)
-  </script>
   <title>Fake Company</title>
 </head>
 
@@ -22,9 +17,9 @@
   </tr>
   </table>
 
-  <form action="/branch" method="put">
-    <input type="text" name="Branch name">
-    <input type="text" name="Branch address">
+  <form action="/branch" method="post">
+    <input type="text" name="name">
+    <input type="text" name="address">
     <input type="submit" value="Add branch">
   </form>
 
@@ -56,7 +51,27 @@
     <input type="submit" value="Submit">
   </form>
 
+  <script type="text/javascript">
+    branchesTable = document.getElementById("branchesTable")
+    fetch("/branches")
+    .then(response => response.json())
+    .then(branches => {
+      branches.forEach(branch => {
+        row = document.createElement("tr")
 
+        branchName = document.createElement("td")
+        branchName.innerHTML = branch.name
+        branchAddress = document.createElement("td")
+        branchAddress.innerHTML = branch.address
+
+        row.appendChild(branchName)
+        row.appendChild(branchAddress)
+
+        branchesTable.append(row)
+      })
+      
+  })
+  </script>
 </body>
 
 </html>

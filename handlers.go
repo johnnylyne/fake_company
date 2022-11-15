@@ -26,7 +26,6 @@ type Employee struct {
 }
 
 func retrieveBranchesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Retrieving branches")
 	var branches []Branch
 
 	rows, rowErr := database.DB.Query("SELECT br.name, br.address FROM main.branch br")
@@ -46,7 +45,6 @@ func retrieveBranchesHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func retrieveDepartmentsHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Retrieving departments")
 	var departments []Department
 
 	parameters, success := r.URL.Query()["branch_id"]
@@ -93,7 +91,6 @@ func retrieveDepartmentsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func retrieveEmployeesHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Retrieving employees")
 	var employees []Employee
 
 	rows, rowErr := database.DB.Query("SELECT emp.forename, emp.surname, dep.name FROM main.department dep JOIN main.employee emp ON dep.id = emp.department_id")
@@ -114,7 +111,6 @@ func retrieveEmployeesHandler(w http.ResponseWriter, r *http.Request) {
 
 
 func createBranchHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Creating branch")
 	type Response struct {
 		Id int `json:"id"`
 	}
@@ -133,8 +129,6 @@ func createBranchHandler(w http.ResponseWriter, r *http.Request) {
 
 	branch.Name = r.Form.Get("name")
 	branch.Address = r.Form.Get("address")
-	fmt.Printf("name: ", branch.Name)
-	fmt.Printf("address: ", branch.Address)
 	
 	tx, transactionErr := database.DB.Begin()
 	if transactionErr != nil {
@@ -164,5 +158,5 @@ func createBranchHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Successfully committed %v", branch)
 
-	json.NewEncoder(w).Encode(response)
+	http.Redirect(w, r, "/assets/", http.StatusFound)
 }
